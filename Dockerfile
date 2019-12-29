@@ -1,19 +1,12 @@
 # -----------------------------------
 # Jormungandr Test Network Node Image
+# https://github.com/input-output-hk/jormungandr
 # -----------------------------------
 ARG cardano_network="jormungandr"
 
 FROM ubuntu:disco
 
 USER root
-
-# Create an account for the node.
-RUN adduser --disabled-password --gecos '' cardano && \
-  adduser cardano sudo && \
-  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-USER cardano
-WORKDIR "/home/cardano"
 
 # Install OS Packages
 RUN apt-get update && apt-get install -y \
@@ -24,20 +17,29 @@ RUN apt-get update && apt-get install -y \
   make \
   && rm -rf /var/lib/apt/lists/*
 
-# Set up a working directory
-RUN mkdir "~/daedalus" && cd "~/daedalus"
+  # Create an account for the node.
+RUN adduser --disabled-password --gecos '' cardano && \
+  adduser cardano sudo && \
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+USER cardano
+WORKDIR "/home/cardano"
 
 # Build & Install Protocol Buffers compiler, a prereq for building from source.
-RUN mkdir ./protoc && \
+# https://github.com/protocolbuffers/protobuf/releases
+RUN mkdir "~/protoc" && \
   protoc_latest_release=$(curl --silent "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest" | jq -r .tag_name) && \
   protoc_tar="protobuf-all-${protoc_latest_release}.tar.gz" && \
-  tar -C ./protoc -xvf "${protoc_tar}" && \
-  cd ./protoc && \
+  tar -C "~/protoc" -xvf "${protoc_tar}" && \
+  cd "~/protoc" && \
   ./configure && \
   make && \
   make check && \
   sudo make install && \
   sudo ldconfig 
+
+# Set up a working directory
+RUN mkdir "~/daedalus" && cd "~/daedalus"
 
 # Install Rust, so we can compile jormungandr from source
 # https://www.rust-lang.org/tools/install
