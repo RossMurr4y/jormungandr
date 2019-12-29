@@ -2,23 +2,21 @@
 # Jormungandr Test Network Node Image
 # -----------------------------------
 ARG cardano_network="jormungandr"
-ARG cardano_user="cardano"
 
 FROM ubuntu:disco
 
 USER root
 
 # Create an account for the node.
-RUN useradd --shell /bin/bash --create-home ${cardano_user} && \
-  usermod -G sudo ${cardano_user} && \
-  echo "#Allow ${cardano_user} to install extra packages" && \
-  echo "${cardano_user} ALL = NOPASSWD : /usr/bin/apt-get" >> /etc/sudoers
+RUN adduser --disabled-password --gecos '' cardano && \
+  adduser cardano sudo && \
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-USER ${cardano_user}
-WORKDIR "/home/${cardano_user}"
+USER cardano
+WORKDIR "/home/cardano"
 
 # Install OS Packages
-RUN apg-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y \
   wget \
   snapd \
   git \
