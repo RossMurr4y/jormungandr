@@ -10,11 +10,12 @@ USER root
 
 # Install OS Packages
 RUN apt-get update && apt-get install -y \
-  wget \
-  snapd \
+  curl \
   git \
   jq \
   make \
+  snapd \
+  wget \
   && rm -rf /var/lib/apt/lists/*
 
   # Create an account for the node.
@@ -27,10 +28,11 @@ WORKDIR "/home/cardano"
 
 # Build & Install Protocol Buffers compiler, a prereq for building from source.
 # https://github.com/protocolbuffers/protobuf/releases
-RUN mkdir -p "/home/cardano/protoc" && \
+RUN mkdir -p "/home/cardano/protoc" && cd "/home/cardano/protoc" && \
   protoc_latest_release=$(curl --silent "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest" | jq -r .tag_name) && \
-  tar -C "/home/cardano/protoc" -xvf "protobuf-all-${protoc_latest_release}.tar.gz" && \
-  cd "/home/cardano/protoc" && \
+  curl -O "https://github.com/protocolbuffers/protobuf/releases/download/${protoc_latest_release}/protobuf-all-${protoc_latest_release:1}.tar.gz" && \
+  tar -C "/home/cardano/protoc" -xvf "protobuf-all-${protoc_latest_release:1}.tar.gz" && \
+  rm -f ./protobuf-all-${protoc_latest_release:1}.tar.gz && \
   ./configure && \
   make && \
   make check && \
