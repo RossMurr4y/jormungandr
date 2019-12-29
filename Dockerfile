@@ -27,11 +27,10 @@ WORKDIR "/home/cardano"
 
 # Build & Install Protocol Buffers compiler, a prereq for building from source.
 # https://github.com/protocolbuffers/protobuf/releases
-RUN mkdir "~/protoc" && \
+RUN mkdir -p "/home/cardano/protoc" && \
   protoc_latest_release=$(curl --silent "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest" | jq -r .tag_name) && \
-  protoc_tar="protobuf-all-${protoc_latest_release}.tar.gz" && \
-  tar -C "~/protoc" -xvf "${protoc_tar}" && \
-  cd "~/protoc" && \
+  tar -C "/home/cardano/protoc" -xvf "protobuf-all-${protoc_latest_release}.tar.gz" && \
+  cd "/home/cardano/protoc" && \
   ./configure && \
   make && \
   make check && \
@@ -39,12 +38,12 @@ RUN mkdir "~/protoc" && \
   sudo ldconfig 
 
 # Set up a working directory
-RUN mkdir "~/daedalus" && cd "~/daedalus"
+RUN mkdir "/home/cardano/daedalus" && cd "/home/cardano/daedalus"
 
 # Install Rust, so we can compile jormungandr from source
 # https://www.rust-lang.org/tools/install
+ENV PATH ${HOME}/.cargo/bin:$PATH
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
-  PATH="$PATH:${HOME}/.cargo/bin" && \
   rustup install stable && \
   rustup default stable
 
