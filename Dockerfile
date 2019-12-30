@@ -4,6 +4,7 @@
 # -----------------------------------
 
 # baseline stage
+# setup min. requirements
 ARG cardano_network="jormungandr"
 FROM ubuntu:disco AS baseline
 USER root
@@ -16,28 +17,25 @@ RUN adduser --disabled-password --gecos '' cardano \
     && adduser cardano sudo \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-RUN mkdir -p /home/cardano/{daedalus,scripts,protoc,rust}
+RUN mkdir -p /home/cardano/{daedalus/bin,scripts,protoc}
 COPY scripts /home/cardano/scripts
 RUN chmod -R u+rwx /home/cardano \
     && chown -R cardano:cardano /home/cardano
 
-# protoc stage - build protocol buffers from source
-FROM baseline AS protoc
+# build stage
+# build protoc, rust + cardano node from source
+FROM baseline AS builds
 WORKDIR /home/cardano/protoc
 RUN apt-get update \
     && apt-get install -y autoconf automake libtool make g++ unzip \
-    && /home/cardano/scripts/build_protoc.sh
+    && /home/cardano/scripts/build_protoc.sh \
+    && cd /home/cardano/daedalus \
+    && /home/cardano/scripts/build_rust.sh \
+    && /home/cardano/scripts/build_${cardano_network}.sh
 
-# rust stage - build rust from source
-FROM baseline AS rust
-WORKDIR /home/cardano/rust
-RUN /home/cardano/scripts/build_rust.sh
-
-# daedalus stage - build cardano node from source
-FROM baseline AS daedalus
-WORKDIR /home/cardano/daedalus
-RUN /home/cardano/scripts/build_${cardano_network}.sh
-
+# node stage - copy compiled applications to baseline.
+FROM baseline AS node
+COPY --from=builds:latest --chown=cardano:cardano /home/cardano/daedalus/bin /usr/local/bin
 USER cardano
 ENTRYPOINT [ "echo", 'testing that it gets this far.' ]
 
