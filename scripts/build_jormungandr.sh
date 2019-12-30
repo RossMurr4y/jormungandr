@@ -2,6 +2,8 @@
 
 # Build the latest "jormungandr" test network from source.
 
+mkdir -p ./bin
+
 # Clone cardano network from source
 git clone --recurse-submodules "https://github.com/input-output-hk/jormungandr.git"
 cd jormungandr
