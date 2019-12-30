@@ -39,5 +39,5 @@ WORKDIR /home/cardano/daedalus
 RUN /home/cardano/scripts/build_${cardano_network}.sh
 
 USER cardano
-ENTRYPOINT [ "echo 'testing that it gets this far.'" ]
+ENTRYPOINT [ "echo", 'testing that it gets this far.' ]
 
