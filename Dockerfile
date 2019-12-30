@@ -19,4 +19,6 @@ RUN addgroup -S cardano \
     && echo '%cardano ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 COPY --from=builder --chown=cardano:cardano /tmp/bin/ /usr/local/bin
 USER cardano
-ENTRYPOINT [ "echo", "Files In Bin: $(ls /usr/local/bin)" ]
+# testing that the binaries work
+ENTRYPOINT ["jormungandr"]
+CMD ["--help"] 
