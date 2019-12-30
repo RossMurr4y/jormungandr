@@ -11,9 +11,6 @@ cd jormungandr
 latest_version=$(curl --silent "https://api.github.com/repos/input-output-hk/jormungandr/releases/latest" | jq -r .tag_name)
 git checkout tags/${latest_version}
 
-# Build cardano network & jcli from source
-cargo install --path jormungandr --features systemd
-cargo install --path jcli
-
-# Create a Wallet address to be paid into from the faucet
-#RUN wget https://raw.githubusercontent.com/input-output-hk/jormungandr-qa/master/scripts/createAddress.sh
+# Build cardano network & jcli from source + output to our staging bin directory.
+cargo install --path jormungandr --features systemd --root /home/cardano/daedalus/bin
+cargo install --path jcli --root /home/cardano/daedalus/bin
