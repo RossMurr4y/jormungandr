@@ -15,29 +15,24 @@ RUN apt-get update && apt-get install -y \
   jq \
   make \
   snapd \
+  unzip \
   wget \
   && rm -rf /var/lib/apt/lists/*
 
-  # Create an account for the node.
+# Create an account for the node.
 RUN adduser --disabled-password --gecos '' cardano && \
   adduser cardano sudo && \
   echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-USER cardano
-WORKDIR "/home/cardano"
+RUN mkdir -p /home/cardano/{daedalus,scripts,protoc}
+COPY scripts /home/cardano/scripts
+RUN chmod -R u+rwx /home/cardano && \
+    chown -R cardano:cardano /home/cardano
 
 # Build & Install Protocol Buffers compiler, a prereq for building from source.
 # https://github.com/protocolbuffers/protobuf/releases
-RUN mkdir -p "/home/cardano/protoc" && cd "/home/cardano/protoc" && \
-  protoc_latest_release=$(curl --silent "https://api.github.com/repos/protocolbuffers/protobuf/releases/latest" | jq -r .tag_name) && \
-  curl -O "https://github.com/protocolbuffers/protobuf/releases/download/${protoc_latest_release}/protobuf-all-${protoc_latest_release:1}.tar.gz" && \
-  tar -C "/home/cardano/protoc" -xvf "protobuf-all-${protoc_latest_release:1}.tar.gz" && \
-  rm -f ./protobuf-all-${protoc_latest_release:1}.tar.gz && \
-  ./configure && \
-  make && \
-  make check && \
-  sudo make install && \
-  sudo ldconfig 
+WORKDIR "/home/cardano/protoc"
+RUN /home/cardano/scripts/build_protoc.sh
 
 # Set up a working directory
 RUN mkdir "/home/cardano/daedalus" && cd "/home/cardano/daedalus"
@@ -64,6 +59,8 @@ RUN cargo install --path "${cardano_network}" --features systemd && \
 
 # Create a Wallet address to be paid into from the faucet
 #RUN wget https://raw.githubusercontent.com/input-output-hk/jormungandr-qa/master/scripts/createAddress.sh
+
+USER cardano
 
 ENTRYPOINT [ "echo 'testing that it gets this far.'" ]
 
