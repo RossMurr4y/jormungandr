@@ -3,39 +3,25 @@
 # https://github.com/input-output-hk/jormungandr
 # -----------------------------------
 
-# baseline stage
-# setup min. requirements
-ARG cardano_network="jormungandr"
-FROM ubuntu:disco AS baseline
+# build dependencies + node from source, then output to ~/bin
+FROM alpine:3.11.2 AS builder
 USER root
 
-RUN apt-get update \
-    && apt-get install -y curl git jq snapd wget \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update \
+    && apk add curl git jq wget autoconf automake libtool make g++ unzip \
+    && mkdir -p /tmp/{bin,scripts}
+COPY scripts /tmp/scripts
+WORKDIR /tmp/scripts
+RUN chmod -R u+rwx /tmp/scripts \
+    && /tmp/scripts/build_protoc.sh \
+    && /tmp/scripts/build_rust.sh \
+    && /tmp/scripts/build_jormungandr.sh
 
-RUN adduser --disabled-password --gecos '' cardano \
-    && adduser cardano sudo \
-    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-RUN mkdir -p /home/cardano/{daedalus/bin,scripts,protoc}
-COPY scripts /home/cardano/scripts
-RUN chmod -R u+rwx /home/cardano \
-    && chown -R cardano:cardano /home/cardano
-
-# build stage
-# build protoc, rust + cardano node from source
-FROM baseline AS builds
-WORKDIR /home/cardano/protoc
-RUN apt-get update \
-    && apt-get install -y autoconf automake libtool make g++ unzip \
-    && /home/cardano/scripts/build_protoc.sh \
-    && cd /home/cardano/daedalus \
-    && /home/cardano/scripts/build_rust.sh \
-    && /home/cardano/scripts/build_${cardano_network}.sh
-
-# node stage - copy compiled applications to baseline.
-FROM baseline AS node
-COPY --from=builds:latest --chown=cardano:cardano /home/cardano/daedalus/bin /usr/local/bin
+# copy compiled binaries into fresh image.
+FROM alpine:3.11.2 AS node
+RUN addgroup -S cardano \
+    && adduser --disabled-password --gecos '' -S cardano -G cardano \
+    && echo '%cardano ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+COPY --from=builder:latest --chown=cardano:cardano /tmp/bin/* /usr/local/bin
 USER cardano
-ENTRYPOINT [ "echo", 'testing that it gets this far.' ]
-
+ENTRYPOINT [ "echo", "Files In Bin: $(ls /usr/local/bin)" ]

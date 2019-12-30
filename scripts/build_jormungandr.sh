@@ -2,8 +2,6 @@
 
 # Build the latest "jormungandr" test network from source.
 
-mkdir -p ./bin
-
 # Clone cardano network from source
 git clone --recurse-submodules "https://github.com/input-output-hk/jormungandr.git"
 cd jormungandr
@@ -14,5 +12,5 @@ latest_version=$(curl --silent "https://api.github.com/repos/input-output-hk/jor
 git checkout tags/${latest_version}
 
 # Build cardano network & jcli from source + output to our staging bin directory.
-cargo install --path jormungandr --features systemd --root /home/cardano/daedalus/bin
-cargo install --path jcli --root /home/cardano/daedalus/bin
+cargo install --path jormungandr --features systemd --root /tmp/bin
+cargo install --path jcli --root /tmp/bin
