@@ -28,7 +28,7 @@ RUN adduser --disabled-password --gecos '' cardano && \
     adduser cardano sudo && \
     echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-RUN mkdir -p /home/cardano/{daedalus,scripts,protoc}
+RUN mkdir -p /home/cardano/{daedalus,scripts,protoc,rust}
 COPY scripts /home/cardano/scripts
 RUN chmod -R u+rwx /home/cardano && \
     chown -R cardano:cardano /home/cardano
@@ -40,24 +40,11 @@ RUN /home/cardano/scripts/build_protoc.sh
 
 # Install Rust, so we can compile jormungandr from source
 ENV PATH ${HOME}/.cargo/bin:$PATH
-WORKDIR /home/cardano/daedalus
+WORKDIR /home/cardano/rust
 RUN /home/cardano/scripts/build_rust.sh
 
-# Clone cardano network from source
-RUN git clone --recurse-submodules "https://github.com/input-output-hk/${cardano_network}.git" && \
-    cd jormungandr
-
-# Retrieve the latest tag from the source repo & checkout
-# (cant just use latest tag, as some tags may be staged but not latest release.)
-RUN latest_version=$(curl --silent "https://api.github.com/repos/input-output-hk/${cardano_network}/releases/latest" | jq -r .tag_name) && \
-    git checkout "tags/${latest_version}"
-
-# Build cardano network & jcli from source
-RUN cargo install --path "${cardano_network}" --features systemd && \
-    cargo install --path jcli
-
-# Create a Wallet address to be paid into from the faucet
-#RUN wget https://raw.githubusercontent.com/input-output-hk/jormungandr-qa/master/scripts/createAddress.sh
+WORKDIR /home/cardano/daedalus
+RUN /home/cardano/scripts/build_jormungandr.sh
 
 USER cardano
 
