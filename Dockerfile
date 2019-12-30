@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     snapd \
     unzip \
     wget \
-    && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
 # Create an account for the node.
 RUN adduser --disabled-password --gecos '' cardano && \
@@ -35,18 +35,13 @@ RUN chmod -R u+rwx /home/cardano && \
 
 # Build & Install Protocol Buffers compiler, a prereq for building from source.
 # https://github.com/protocolbuffers/protobuf/releases
-WORKDIR "/home/cardano/protoc"
+WORKDIR /home/cardano/protoc
 RUN /home/cardano/scripts/build_protoc.sh
 
-# Set up a working directory
-RUN mkdir "/home/cardano/daedalus" && cd "/home/cardano/daedalus"
-
 # Install Rust, so we can compile jormungandr from source
-# https://www.rust-lang.org/tools/install
 ENV PATH ${HOME}/.cargo/bin:$PATH
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
-    rustup install stable && \
-    rustup default stable
+WORKDIR /home/cardano/daedalus
+RUN /home/cardano/scripts/build_rust.sh
 
 # Clone cardano network from source
 RUN git clone --recurse-submodules "https://github.com/input-output-hk/${cardano_network}.git" && \
