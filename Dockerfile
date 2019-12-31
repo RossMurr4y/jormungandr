@@ -3,13 +3,16 @@
 # https://github.com/input-output-hk/jormungandr
 # -----------------------------------
 
-# build dependencies + node from source, then output to /tmp/bin
-FROM rust:latest AS builder
-USER root
+# build static binaries from source + output to /tmp/bin
+# rust-musl-builder allows for static binaries that have no dependencies
+FROM ekidd/rust-musl-builder:stable AS builder
+USER rust
 COPY scripts /tmp/scripts
 WORKDIR /tmp/scripts
-RUN apt-get update && apt-get -y install jq libsystemd-dev \
-    && chmod -R u+rwx /tmp/scripts \
+RUN sudo apt-get update \
+    && sudo apt-get -y install jq libsystemd-dev \
+    && sudo chmod -R u+rwx /tmp/scripts \
+    && sudo chown -R rust:rust /tmp/scripts \
     && /tmp/scripts/build_jormungandr.sh
 
 # copy compiled binaries into fresh alpine image.

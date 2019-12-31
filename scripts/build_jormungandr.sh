@@ -12,5 +12,5 @@ latest_version=$(curl --silent "https://api.github.com/repos/input-output-hk/jor
 git checkout tags/${latest_version}
 
 # Build cardano network & jcli from source + output to our staging bin directory.
-cargo install --path jormungandr --features systemd --root /tmp
+cargo install --path jormungandr --root /tmp
 cargo install --path jcli --root /tmp
