@@ -56,3 +56,55 @@ docker run rossmurr4y/daedalus:latest
 # Example: run "jcli utils --help"
 docker run --entrypoint jcli rossmurr4y/daedalus utils --help
 ```
+#
+# Stake Pool Setup
+
+## Assumptions:
+
+It is assumed that when following the below instructions to setup a stake pool that you are running a Linux OS using bash. Other OS's should work but you will need to make your own adjustments.
+
+It is assumed that you have created a workind directory for yourself such as ```~/daedalus``` and unless specified otherwise these commands are run from there.
+
+## 0. Local Alias
+
+fast local access to jcli can be enabled through use of an alias, stored in your ~/.bashrc file. We'll mount our home drive to the cardano home drive to store output files.
+
+```
+echo "alias jcli='docker run --entrypoint jcli -v ~/daedalus:/home/cardano rossmurr4y/daedalus'" >> ~/.bashrc
+source ~/.bashrc
+```
+
+## 1. Configuration Files
+
+Performed locally, we will generate the files necessary for successful setup of a staking node. Once created, you will want to store these somewhere easily accessible to a running container.
+
+- encryption keys (VRF for leader election participation & KES for signing blocks with)
+- node configuration file
+
+### Generate VRF Keypair
+```
+# generate private key to your local machine (to the volume mount in above alias)
+jcli key generate --type=Curve25519_2HashDH > stake_pool_vrf.prv
+
+# generate public key from the private key
+jcli key to-public --input /home/cardano/stake_pool_vrf.prv > stake_pool_vrf.pub
+
+# verify both files now exist locally
+ls
+
+# and both have unique content
+cat *
+```
+
+### Generate KES Keypair
+Same as previous keypair, but with different encryption type and file names.
+```
+jcli key generate --type=SumEd25519_12 > stake_pool_kes.prv
+jcli key to-public --input /home/cardano/stake_pool_kes.prv > stake_pool_kes.pub
+
+# stake_pool_kes.prv will be quite long,  the others 1-liners.
+ls
+cat *
+```
+
+[More Information](https://input-output-hk.github.io/jormungandr/stake_pool/registering_stake_pool.html)
