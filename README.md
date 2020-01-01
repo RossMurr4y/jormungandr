@@ -138,14 +138,27 @@ jcli certificate new stake-pool-registration \
 jcli certificate get-stake-pool-id /home/cardano/stake_pool.cert > stake_pool.id
 ```
 
+### Create Secrets YAML File
+All the "secrets" (private keys) are going to need to be passed to jormungandr when we start the node. We do this by creating a secrets yaml file, and pass that instead of them all one at a time.
+
+**Note**: YAML is very reliant on syntax. To ensure consistency the steps below will build the configuration file using the application "yq".
+
+```
+# create the secrets file
+echo "---" > node_secret.yaml
+
+# add the kes (signing), vrf and node id secrets
+yq write -i node_secret.yaml genesis.sig_key $(cat stake_pool_kes.prv)
+yq write -i node_secret.yaml genesis.vrf_key $(cat stake_pool_vrf.prv)
+yq write -i node_secret.yaml genesis.node_id $(cat stake_pool.id)
+```
+
 ## Node Configuration File
 A YAML document is required to tell the node the various configuration settings to use when it starts up. In these steps we'll create a standard YAML document that the average node operator would use. More advanced configuration can be achieved by exploring the other settings in the [jormungandr user guide](https://input-output-hk.github.io/jormungandr/configuration/introduction.html).
 
-**Note**: YAML is very reliant on syntax. To ensure consistency the steps below will build the configuration file programatically using "yq", however if you are comfortable with YAML then jump to the end for the full file.
-
 ```
 # start by creating an empty yaml file.
-touch > jormungandr_config.yaml
+echo "---" > jormungandr_config.yaml
 
 # set storage location for the blockchain. Skip to keep in-memory.
 yq write -i jormungandr_config.yaml storage /temp/storage
@@ -160,3 +173,5 @@ yq write -i jormungandr_config.yaml p2p.public_address /ipv4/<public-ip-address>
 yq write -i jormungandr_config.yaml p2p.topics_of_interest.messages high
 yq write -i jormungandr_config.yaml p2p.topics_of_interest.blocks high
 ```
+
+## 
