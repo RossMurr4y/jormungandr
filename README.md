@@ -79,7 +79,7 @@ source ~/.bashrc
 
 Performed locally, we will generate the files necessary for successful setup of a staking node. Once created, you will want to store these somewhere easily accessible to a running container.
 
-- encryption keys (VRF for leader election participation & KES for signing blocks with)
+- encryption keys (VRF for leader election participation & KES for signing blocks with stake key for identifying yourself as owner)
 - node configuration file
 
 ### Generate VRF Keypair
@@ -107,7 +107,36 @@ jcli key to-public --input /home/cardano/stake_pool_kes.prv > stake_pool_kes.pub
 ls
 cat *
 ```
+
+### Generate Owner Key
+```
+ jcli key generate --type=Ed25519Extended > owner_key.prv
+ jcli key to-public --input /home/cardano/owner_key.prv > owner_key.pub
+```
+
 [More Information](https://input-output-hk.github.io/jormungandr/stake_pool/registering_stake_pool.html)
+
+## Create a Stake Pool Certificate & Retreive Stake Pool Id
+
+In order to participate on an existing blockchain, a certificate must be generated using the newly minted keypairs. From this certificate we will retrieve the Stake Pool Id that uniquely identifies our node.
+
+### Generate Certificate
+```
+jcli certificate new stake-pool-registration \
+    --kes-key $(cat stake_pool_kes.pub) \
+    --vrf-key $(cat stake_pool_vrf.pub) \
+    --start-validity 0 \
+    --management-threshold 1 \
+    --tax-fixed 1000000 \
+    --tax-limit 1000000000 \
+    --tax-ratio "1/10" \
+    --owner $(cat owner_key.pub) > stake_pool.cert
+```
+
+### Retreive Stake Pool Id
+```
+jcli certificate get-stake-pool-id /home/cardano/stake_pool.cert > stake_pool.id
+```
 
 ## Node Configuration File
 A YAML document is required to tell the node the various configuration settings to use when it starts up. In these steps we'll create a standard YAML document that the average node operator would use. More advanced configuration can be achieved by exploring the other settings in the [jormungandr user guide](https://input-output-hk.github.io/jormungandr/configuration/introduction.html).
