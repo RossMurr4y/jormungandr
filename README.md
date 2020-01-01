@@ -11,6 +11,7 @@ The second stage is the "node" stage which uses a clean Alpine container image. 
 
 ### Prerequisites
 - [docker](https://docs.docker.com/install/)
+- [yq](https://mikefarah.github.io/yq/) (for stake pool setup only)
 
 ### Commands
 ```
@@ -65,7 +66,7 @@ It is assumed that when following the below instructions to setup a stake pool t
 
 It is assumed that you have created a workind directory for yourself such as ```~/daedalus``` and unless specified otherwise these commands are run from there.
 
-## 0. Local Alias
+## Local Alias
 
 fast local access to jcli can be enabled through use of an alias, stored in your ~/.bashrc file. We'll mount our home drive to the cardano home drive to store output files.
 
@@ -74,7 +75,7 @@ echo "alias jcli='docker run --entrypoint jcli -v ~/daedalus:/home/cardano rossm
 source ~/.bashrc
 ```
 
-## 1. Configuration Files
+## KeyPairs
 
 Performed locally, we will generate the files necessary for successful setup of a staking node. Once created, you will want to store these somewhere easily accessible to a running container.
 
@@ -106,5 +107,27 @@ jcli key to-public --input /home/cardano/stake_pool_kes.prv > stake_pool_kes.pub
 ls
 cat *
 ```
-
 [More Information](https://input-output-hk.github.io/jormungandr/stake_pool/registering_stake_pool.html)
+
+## Node Configuration File
+A YAML document is required to tell the node the various configuration settings to use when it starts up. In these steps we'll create a standard YAML document that the average node operator would use. More advanced configuration can be achieved by exploring the other settings in the [jormungandr user guide](https://input-output-hk.github.io/jormungandr/configuration/introduction.html).
+
+**Note**: YAML is very reliant on syntax. To ensure consistency the steps below will build the configuration file programatically using "yq", however if you are comfortable with YAML then jump to the end for the full file.
+
+```
+# start by creating an empty yaml file.
+touch > jormungandr_config.yaml
+
+# set storage location for the blockchain. Skip to keep in-memory.
+yq write -i jormungandr_config.yaml storage /temp/storage
+
+# set the logging information. entirely optional but useful.
+yq write -i jormungandr_config.yaml log.level warn
+yq write -i jormungandr_config.yaml log.format json
+yq write -i jormungandr_config.yaml log.output.file /temp/storage/jormungandr.log
+
+# set p2p configuration. Replace with your Public IP Address
+yq write -i jormungandr_config.yaml p2p.public_address /ipv4/<public-ip-address>/tcp/8080
+yq write -i jormungandr_config.yaml p2p.topics_of_interest.messages high
+yq write -i jormungandr_config.yaml p2p.topics_of_interest.blocks high
+```
