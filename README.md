@@ -169,7 +169,7 @@ yq write -i jormungandr_config.yaml log.format json
 yq write -i jormungandr_config.yaml log.output.file /temp/storage/jormungandr.log
 
 # set p2p configuration. Replace with your Public IP Address
-yq write -i jormungandr_config.yaml p2p.public_address /ipv4/<public-ip-address>/tcp/8080
+yq write -i jormungandr_config.yaml p2p.public_address /ip4/<public-ip-address>/tcp/8080
 yq write -i jormungandr_config.yaml p2p.topics_of_interest.messages high
 yq write -i jormungandr_config.yaml p2p.topics_of_interest.blocks high
 ```
