@@ -172,6 +172,26 @@ yq write -i jormungandr_config.yaml log.output.file /temp/storage/jormungandr.lo
 yq write -i jormungandr_config.yaml p2p.public_address /ip4/<public-ip-address>/tcp/8080
 yq write -i jormungandr_config.yaml p2p.topics_of_interest.messages high
 yq write -i jormungandr_config.yaml p2p.topics_of_interest.blocks high
+
 ```
 
-## 
+## Genisis Hash YAML File
+We're going to create a yaml file for storing and retrieving the genisis block hash values for any blockchains that we want to connect to. For some this may only be a single blockchain however if you are running across multiple networks (not just test) then its handy to have them all in one place in a simple format.
+
+[Official Genesis Block Hashes](https://hydra.iohk.io/build/1523436/download/1/index.html)
+```
+# create your file
+echo "---" > genesis_blocks.yaml
+
+# repeat the following for as many hashes as you wish to store.
+# Example: yd write -i genesis_blocks.yaml <cluster> <hash>
+yq write -i genesis_blocks.yaml itn_rewards_v1 	8e4d2a343f3dcf9330ad9035b3e8d168e6728904262f2c434a4f8f934ec7b676
+```
+
+## Starting Your Node
+Now we have our node configuration file and genesis hash file, we can start our node!
+```
+hash=$(yq read genesis_blocks.yaml itn_rewards_v1)
+docker run rossmurr4y/jormungandr --genesis-block-hash $hash --config /home/cardano/jormungandr_config.yaml
+```
+If all was successful, you should see the node begin to connect to the jormungandr network and begin syncing the node. If you did not provide a storage location in your node configuration yaml then it will store the blockchain in memory and be lost when the container is destroyed.
