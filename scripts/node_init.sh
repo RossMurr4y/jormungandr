@@ -4,10 +4,18 @@
 
 # Initialize the jormungandr container
 
-# -- Config Defaults -- #
-
+# -- Option Defaults -- #
+LISTEN_ADDRESS_DEFAULT="/ip4/0.0.0.0/tcp/3000"
 PUBLIC_ADDRESS_DEFAULT="/ip4/127.0.0.1/tcp/3000"
 GENESIS_HASH_DEFAULT="8e4d2a343f3dcf9330ad9035b3e8d168e6728904262f2c434a4f8f934ec7b676" #itn_rewards
+
+# -- Env Var Defaults -- #
+LOG_FORMAT_DEFAULT="plain"
+LOG_LEVEL_DEFAULT="info"
+LOG_OUTPUT_DEFAULT="stderr"
+P2P_BLOCK_INTEREST_DEFAULT="high"
+P2P_MESSAGE_INTEREST_DEFAULT="high"
+STORAGE_PATH_DEFAULT=""
 
 function usage(){
   cat <<EOF
@@ -17,7 +25,7 @@ Initialization script for the container.
 This script is intended to be the default entry point to the container.
 Rather than requiring the operator to write/configure a node config file,
 this script will generate the file and pass in default values, 
-environment variables or arguments passed to the script itself.
+environment variables and arguments passed to the script itself.
 
 Usage: $(basename $0)
 
@@ -25,37 +33,61 @@ where
 
 (o) -g                  is the genesis block hash of the blockchain.
 (o) -h                  Shows this text.
+(o) -l                  is the listen_address property of the config yaml.
 (o) -p                  is the public_address property of the config yaml.
+(o) -s                  is the storage property of the config yaml.
 
 (m) mandatory, (o) optional, (d) deprecated
 
-DEFAULTS:
+OPTION DEFAULTS:
 
+LISTEN_ADDRESS = "${LISTEN_ADDRESS_DEFAULT}"
 PUBLIC_ADDRESS = "${PUBLIC_ADDRESS_DEFAULT}"
 GENESIS_HASH   = "${GENESIS_HASH_DEFAULT}"
 
+ENVIRONMENT VARIABLE DEFAULTS:
+
+LOG_FORMAT            = "${LOG_FORMAT_DEFAULT}"
+LOG_LEVEL             = "${LOG_LEVEL_DEFAULT}"
+LOG_OUTPUT            = "${LOG_OUTPUT_DEFAULT}"
+P2P_BLOCK_INTEREST    = "${P2P_BLOCK_INTEREST_DEFAULT}"
+P2P_MESSAGE_INTEREST  = "${P2P_MESSAGE_INTEREST_DEFAULT}"
+STORAGE_PATH          = "${STORAGE_PATH_DEFAULT}"
+
 NOTES:
-  1. Order of precedence for the configuration values are:
-    Script Options > Environment Variables > Default Values
+  1.  If a setting is not covered by the script options, then it must be set
+      through environment variables (list above).
+  2.  Options passed to the script, overrule both env. variables and defaults.
 
 EOF
 }
 
 function options(){
 
-  while getopts "g:h:p:" option; do
+  while getopts "g:h:l:p:s:" option; do
     case "${option}" in
       g) GENESIS_HASH="${OPTARG}" ;;
       h) usage; return 1 ;;
+      l) LISTEN_ADDRESS="${OPTARG}" ;;
       p) PUBLIC_ADDRESS="${OPTARG}" ;;
+      s) STORAGE_PATH="${OPTARG}" ;;
       \?) fatalOption; return 1 ;;
       :) fatalOptionArgument; return 1 ;;
     esac
   done
 
-  # Use Option if exists, else try the ENV Variable (if present), else the default.
-  GENESIS_HASH="${GENESIS_HASH:-${GENESIS_HASH_ENV:-${GENESIS_HASH_DEFAULT}}}"
-  PUBLIC_ADDRESS="${PUBLIC_ADDRESS:-${PUBLIC_ADDRESS_ENV:-${PUBLIC_ADDRESS_DEFAULT}}}"
+  # Apply defaults to unspecified options
+  GENESIS_HASH="${GENESIS_HASH:-${GENESIS_HASH_DEFAULT}}"
+  LISTEN_ADDRESS="${LISTEN_ADDRESS:-${LISTEN_ADDRESS_DEFAULT}}"
+  PUBLIC_ADDRESS="${PUBLIC_ADDRESS:-${PUBLIC_ADDRESS_DEFAULT}}"
+  STORAGE_PATH="${STORAGE_PATH:-${STORAGE_PATH_DEFAULT}}"
+
+  # Apply defaults to unspecified environment vars
+  LOG_FORMAT="${LOG_FORMAT:-${LOG_FORMAT_DEFAULT}}"
+  LOG_LEVEL="${LOG_LEVEL:-${LOG_LEVEL_DEFAULT}}"
+  LOG_OUTPUT="${LOG_OUTPUT:-${LOG_OUTPUT_DEFAULT}}"
+  P2P_BLOCK_INTEREST="${P2P_BLOCK_INTEREST:-${P2P_BLOCK_INTEREST_DEFAULT}}"
+  P2P_MESSAGE_INTEREST="${P2P_MESSAGE_INTEREST:-${P2P_MESSAGE_INTEREST_DEFAULT}}"
 
   return 0
 }
@@ -66,16 +98,15 @@ function generate_node_config(){
 {
   "log": [
     {
-      "format": "plain",
-      "level": "info",
-      "output": "stderr"
+      "format": "${LOG_FORMAT}",
+      "level": "${LOG_LEVEL}",
+      "output": "${LOG_OUTPUT}"
     }
   ],
-  "storage": "/opt/cardano/jormungandr/blockchain/",
   "p2p": {
     "topics_of_interest": {
-      "blocks": "high",
-      "messages": "high"
+      "blocks": "${P2P_BLOCK_INTEREST}",
+      "messages": "${P2P_MESSAGE_INTEREST}"
     },
     "trusted_peers": [
       {
@@ -116,16 +147,29 @@ function generate_node_config(){
       }
     ],
     "public_address": "${PUBLIC_ADDRESS}",
-    "listen_address": "/ip4/0.0.0.0/tcp/3000"
+    "listen_address": "${LISTEN_ADDRESS}"
   }
-}
 EOF
+
+  # Add storage if its been specified
+  if [[ -n "${STORAGE_PATH}" ]]; then
+    sed '$s/$/,/'
+    cat << EOF >> /home/cardano/jormungandr/configuration/node_config.yaml
+  "storage": "${STORAGE_PATH}"
+EOF
+  fi
+
+  # Complete the json object
+  echo "}" >> /home/cardano/jormungandr/configuration/node_config.yaml
+
 }
 
 function start_jormungandr(){
-  jormungandr --genesis-block-hash "${GENESIS_HASH}" \
-              --config '/home/cardano/jormungandr/configuration/node_config.yaml'
-             #--secret '/home/cardano/jormungandr/configuration/node_secret.yaml' TODO: node_secret integration with keyvault vars.
+  jormungandr \
+    --genesis-block-hash "${GENESIS_HASH}" \
+    --config '/home/cardano/jormungandr/configuration/node_config.yaml'
+    #--secret '/home/cardano/jormungandr/configuration/node_secret.yaml'
+    # TODO: node_secret integration with keyvault vars.
 }
 
 function main(){
