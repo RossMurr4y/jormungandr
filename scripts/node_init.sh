@@ -17,6 +17,10 @@ P2P_BLOCK_INTEREST_DEFAULT="high"
 P2P_MESSAGE_INTEREST_DEFAULT="high"
 STORAGE_PATH_DEFAULT=""
 
+# -- Variables -- #
+config_dir="/home/cardano/jormungandr/configuration"
+node_config="${config_dir}/node_config.yaml"
+
 function usage(){
   cat <<EOF
 
@@ -93,8 +97,8 @@ function options(){
 }
 
 function generate_node_config(){
-  mkdir -p "/home/cardano/jormungandr/configuration/"
-  cat << EOF > /home/cardano/jormungandr/configuration/node_config.yaml
+  mkdir -p "${config_dir}"
+  cat << EOF > "${node_config}"
 {
   "log": [
     {
@@ -154,13 +158,13 @@ EOF
   # Add storage if its been specified
   if [[ -n "${STORAGE_PATH}" ]]; then
     sed '$s/$/,/'
-    cat << EOF >> /home/cardano/jormungandr/configuration/node_config.yaml
+    cat << EOF >> "${node_config}"
   "storage": "${STORAGE_PATH}"
 EOF
   fi
 
   # Complete the json object
-  echo "}" >> /home/cardano/jormungandr/configuration/node_config.yaml
+  echo "}" >> "${node_config}"
 
 }
 
