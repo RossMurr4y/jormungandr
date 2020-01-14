@@ -14,8 +14,7 @@ RUN sudo apt-get update \
     && sudo chmod -R u+rwx /tmp/scripts \
     && sudo chown -R rust:rust /tmp/scripts \
     && /tmp/scripts/build_jormungandr.sh \
-    && /tmp/scripts/jormungandr_qa_scripts.sh
-
+    && /tmp/scripts/stage_jormungandr_scripts.sh
 
 # copy compiled binaries into fresh alpine image.
 FROM alpine:3.11.2 AS node
@@ -25,5 +24,5 @@ RUN addgroup -S cardano \
 COPY --from=builder --chown=cardano:cardano /tmp/bin/ /usr/local/bin
 USER cardano
 # testing that the binaries work
-ENTRYPOINT ["jormungandr"]
+ENTRYPOINT ["node_init"]
 CMD ["--help"] 
