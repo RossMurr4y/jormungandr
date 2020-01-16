@@ -5,7 +5,7 @@
 
 # build static binaries from source + output to /tmp/bin
 # rust-musl-builder allows for static binaries that have no dependencies
-FROM ekidd/rust-musl-builder:stable AS builder
+FROM ekidd/rust-musl-builder:latest AS builder
 USER rust
 COPY scripts /tmp/scripts
 WORKDIR /tmp/scripts
