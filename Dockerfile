@@ -24,5 +24,4 @@ RUN addgroup -S cardano \
 COPY --from=builder --chown=cardano:cardano /tmp/bin/ /usr/local/bin
 USER cardano
 # testing that the binaries work
-ENTRYPOINT ["node_init"]
-CMD ["--help"] 
+ENTRYPOINT ["/usr/local/bin/node_init.sh"]
