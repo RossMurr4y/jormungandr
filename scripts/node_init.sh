@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Author: Ross Murray (github.com/rossmurr4y)
 
