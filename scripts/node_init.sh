@@ -4,10 +4,17 @@
 
 # Initialize the jormungandr container
 
+# -- Variables -- #
+config_dir="/home/cardano/jormungandr/configuration"
+node_config="${config_dir}/node_config.yaml"
+trusted_peers_file="${config_dir}/trusted_peers.json"
+
 # -- Option Defaults -- #
 LISTEN_ADDRESS_DEFAULT="/ip4/0.0.0.0/tcp/3000"
 PUBLIC_ADDRESS_DEFAULT="/ip4/127.0.0.1/tcp/3000"
 GENESIS_HASH_DEFAULT="8e4d2a343f3dcf9330ad9035b3e8d168e6728904262f2c434a4f8f934ec7b676" #itn_rewards
+TRUSTED_PEERS_FILE_DEFAULT="${trusted_peers_file}"
+NO_PEERS_DEFAULT=false
 
 # -- Env Var Defaults -- #
 LOG_FORMAT_DEFAULT="plain"
@@ -17,11 +24,6 @@ P2P_BLOCK_INTEREST_DEFAULT="high"
 P2P_MESSAGE_INTEREST_DEFAULT="high"
 STORAGE_PATH_DEFAULT=""
 NODE_SECRET_DEFAULT=false
-
-# -- Variables -- #
-config_dir="/home/cardano/jormungandr/configuration"
-node_config="${config_dir}/node_config.yaml"
-trusted_peers_file="${config_dir}/trusted_peers.json"
 
 function usage(){
   cat <<EOF
@@ -37,21 +39,25 @@ Usage: $(basename $0)
 
 where
 
-(o) -g                  is the genesis block hash of the blockchain.
+(o) -g                  is the [g]enesis block hash of the blockchain.
 (o) -h                  Shows this text.
-(o) -l                  is the listen_address property of the config yaml.
-(o) -p                  is the public_address property of the config yaml.
-(o) -s                  is the storage property of the config yaml.
+(o) -l                  is the [l]isten_address property of the config yaml.
+(o) -n                  NO_PEERS=true - provide [n]o trusted peers to the yaml.
+(o) -p                  is the [p]ublic_address property of the config yaml.
+(o) -s                  is the [s]torage property of the config yaml.
+(o) -t                  is the path to the [t]rusted peers file.
 (o) -x                  NODE_SECRET=true
 
 (m) mandatory, (o) optional, (d) deprecated
 
 OPTION DEFAULTS:
 
-LISTEN_ADDRESS = "${LISTEN_ADDRESS_DEFAULT}"
-PUBLIC_ADDRESS = "${PUBLIC_ADDRESS_DEFAULT}"
-GENESIS_HASH   = "${GENESIS_HASH_DEFAULT}"
+LISTEN_ADDRESS     = "${LISTEN_ADDRESS_DEFAULT}"
+PUBLIC_ADDRESS     = "${PUBLIC_ADDRESS_DEFAULT}"
+GENESIS_HASH       = "${GENESIS_HASH_DEFAULT}"
 STORAGE_PATH *
+TRUSTED_PEERS_FILE = "${TRUSTED_PEERS_FILE_DEFAULT}"
+NO_PEERS           = "${NO_PEERS_DEFAULT}"
 
 * Can be set via script option or environment path. There is only a default
 for the environment variable.
@@ -72,19 +78,25 @@ NOTES:
   2.  Options passed to the script, overrule both env. variables and defaults.
   3.  If setting NODE_SECRET to true (-x) a file must be mounted at 
       /home/cardano/jormungandr/configuration/node_secret.yaml.
+  4.  You can include your own trusted peers file by either setting the path
+      to a new file, or just use a volume mount over the default.
+      
+      i.e: -v <peers-file>:"${TRUSTED_PEERS_FILE_DEFAULT}"
 
 EOF
 }
 
 function options(){
 
-  while getopts "g:h:l:p:s:x" option; do
+  while getopts "g:h:l:n:p:s:t:x" option; do
     case "${option}" in
       g) GENESIS_HASH="${OPTARG}" ;;
       h) usage; return 1 ;;
       l) LISTEN_ADDRESS="${OPTARG}" ;;
+      n) NO_PEERS="${OPTARG}" ;;
       p) PUBLIC_ADDRESS="${OPTARG}" ;;
       s) STORAGE_PATH="${OPTARG}" ;;
+      t) TRUSTED_PEERS_FILE="${OPTARG}" ;;
       x) NODE_SECRET=true ;;
       \?) fatalOption; return 1 ;;
       :) fatalOptionArgument; return 1 ;;
@@ -96,6 +108,8 @@ function options(){
   LISTEN_ADDRESS="${LISTEN_ADDRESS:-${LISTEN_ADDRESS_DEFAULT}}"
   PUBLIC_ADDRESS="${PUBLIC_ADDRESS:-${PUBLIC_ADDRESS_DEFAULT}}"
   STORAGE_PATH="${STORAGE_PATH:-${STORAGE_PATH_DEFAULT}}"
+  TRUSTED_PEERS_FILE="${TRUSTED_PEERS_FILE:-${TRUSTED_PEERS_FILE_DEFAULT}}"
+  NO_PEERS="${NO_PEERS:-${NO_PEERS_DEFAULT}}"
 
   # Apply defaults to unspecified environment vars
   LOG_FORMAT="${LOG_FORMAT:-${LOG_FORMAT_DEFAULT}}"
@@ -110,6 +124,8 @@ function options(){
 
 function generate_node_config(){
   mkdir -p "${config_dir}"
+
+  # Create node config file, apply log and topics
   cat << EOF > "${node_config}"
 {
   "log": [
@@ -125,42 +141,15 @@ function generate_node_config(){
       "messages": "${P2P_MESSAGE_INTEREST}"
     },
     "trusted_peers": [
-      {
-        "address": "/ip4/13.56.0.226/tcp/3000",
-        "id": "7ddf203c86a012e8863ef19d96aabba23d2445c492d86267"
-      },
-      {
-        "address": "/ip4/54.183.149.167/tcp/3000",
-        "id": "df02383863ae5e14fea5d51a092585da34e689a73f704613"
-      },
-      {
-        "address": "/ip4/52.9.77.197/tcp/3000",
-        "id": "fcdf302895236d012635052725a0cdfc2e8ee394a1935b63"
-      },
-      {
-        "address": "/ip4/18.177.78.96/tcp/3000",
-        "id": "fc89bff08ec4e054b4f03106f5312834abdf2fcb444610e9"
-      },
-      {
-        "address": "/ip4/3.115.154.161/tcp/3000",
-        "id": "35bead7d45b3b8bda5e74aa12126d871069e7617b7f4fe62"
-      },
-      {
-        "address": "/ip4/18.182.115.51/tcp/3000",
-        "id": "8529e334a39a5b6033b698be2040b1089d8f67e0102e2575"
-      },
-      {
-        "address": "/ip4/18.184.35.137/tcp/3000",
-        "id": "06aa98b0ab6589f464d08911717115ef354161f0dc727858"
-      },
-      {
-        "address": "/ip4/3.125.31.84/tcp/3000",
-        "id": "8f9ff09765684199b351d520defac463b1282a63d3cc99ca"
-      },
-      {
-        "address": "/ip4/3.125.183.71/tcp/3000",
-        "id": "9d15a9e2f1336c7acda8ced34e929f697dc24ea0910c3e67"
-      }
+EOF
+
+  # Include trusted peers if applicable
+  if [[ ! ${NO_PEERS} ]]; then
+    cat "${TRUSTED_PEERS_FILE}" >> "${node_config}"
+  fi
+
+  # Add in public and listen addresses
+  cat << EOF >> "${node_config}"
     ],
     "public_address": "${PUBLIC_ADDRESS}",
     "listen_address": "${LISTEN_ADDRESS}"
@@ -170,9 +159,7 @@ EOF
   # Add storage if its been specified
   if [[ -n "${STORAGE_PATH}" ]]; then
     sed '$s/$/,/'
-    cat << EOF >> "${node_config}"
-  "storage": "${STORAGE_PATH}"
-EOF
+    echo "\"storage\": \"$(cat ${STORAGE_PATH})\"" >> "${node_config}"
   fi
 
   # Complete the json object
