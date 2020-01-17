@@ -16,10 +16,12 @@ LOG_OUTPUT_DEFAULT="stderr"
 P2P_BLOCK_INTEREST_DEFAULT="high"
 P2P_MESSAGE_INTEREST_DEFAULT="high"
 STORAGE_PATH_DEFAULT=""
+NODE_SECRET_DEFAULT=false
 
 # -- Variables -- #
 config_dir="/home/cardano/jormungandr/configuration"
 node_config="${config_dir}/node_config.yaml"
+trusted_peers_file="${config_dir}/trusted_peers.json"
 
 function usage(){
   cat <<EOF
@@ -40,6 +42,7 @@ where
 (o) -l                  is the listen_address property of the config yaml.
 (o) -p                  is the public_address property of the config yaml.
 (o) -s                  is the storage property of the config yaml.
+(o) -x                  NODE_SECRET=true
 
 (m) mandatory, (o) optional, (d) deprecated
 
@@ -48,6 +51,10 @@ OPTION DEFAULTS:
 LISTEN_ADDRESS = "${LISTEN_ADDRESS_DEFAULT}"
 PUBLIC_ADDRESS = "${PUBLIC_ADDRESS_DEFAULT}"
 GENESIS_HASH   = "${GENESIS_HASH_DEFAULT}"
+STORAGE_PATH *
+
+* Can be set via script option or environment path. There is only a default
+for the environment variable.
 
 ENVIRONMENT VARIABLE DEFAULTS:
 
@@ -57,24 +64,28 @@ LOG_OUTPUT            = "${LOG_OUTPUT_DEFAULT}"
 P2P_BLOCK_INTEREST    = "${P2P_BLOCK_INTEREST_DEFAULT}"
 P2P_MESSAGE_INTEREST  = "${P2P_MESSAGE_INTEREST_DEFAULT}"
 STORAGE_PATH          = "${STORAGE_PATH_DEFAULT}"
+NODE_SECRET           = "${NODE_SECRET_DEFAULT}"
 
 NOTES:
   1.  If a setting is not covered by the script options, then it must be set
       through environment variables (list above).
   2.  Options passed to the script, overrule both env. variables and defaults.
+  3.  If setting NODE_SECRET to true (-x) a file must be mounted at 
+      /home/cardano/jormungandr/configuration/node_secret.yaml.
 
 EOF
 }
 
 function options(){
 
-  while getopts "g:h:l:p:s:" option; do
+  while getopts "g:h:l:p:s:x" option; do
     case "${option}" in
       g) GENESIS_HASH="${OPTARG}" ;;
       h) usage; return 1 ;;
       l) LISTEN_ADDRESS="${OPTARG}" ;;
       p) PUBLIC_ADDRESS="${OPTARG}" ;;
       s) STORAGE_PATH="${OPTARG}" ;;
+      x) NODE_SECRET=true ;;
       \?) fatalOption; return 1 ;;
       :) fatalOptionArgument; return 1 ;;
     esac
@@ -92,6 +103,7 @@ function options(){
   LOG_OUTPUT="${LOG_OUTPUT:-${LOG_OUTPUT_DEFAULT}}"
   P2P_BLOCK_INTEREST="${P2P_BLOCK_INTEREST:-${P2P_BLOCK_INTEREST_DEFAULT}}"
   P2P_MESSAGE_INTEREST="${P2P_MESSAGE_INTEREST:-${P2P_MESSAGE_INTEREST_DEFAULT}}"
+  NODE_SECRET="${NODE_SECRET:-${NODE_SECRET_DEFAULT}}"
 
   return 0
 }
@@ -166,14 +178,23 @@ EOF
   # Complete the json object
   echo "}" >> "${node_config}"
 
+  # cat out the file to stdout for logging
+  echo "Node Configuration File:\n$(cat ${node_config})"
+
 }
 
 function start_jormungandr(){
-  jormungandr \
-    --genesis-block-hash "${GENESIS_HASH}" \
-    --config '/home/cardano/jormungandr/configuration/node_config.yaml'
-    #--secret '/home/cardano/jormungandr/configuration/node_secret.yaml'
-    # TODO: node_secret integration with keyvault vars.
+
+  args=(
+    "genesis-block-hash ${GENESIS_HASH}",
+    'config /home/cardano/jormungandr/configuration/node_config.yaml'
+  )
+
+  if [[ ${NODE_SECRET} ]]; then
+    args += 'secret /home/cardano/jormungandr/configuration/node_secret.yaml'
+  fi
+
+  jormungandr ${args[@]/#/--}
 }
 
 function main(){
