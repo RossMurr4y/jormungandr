@@ -1,7 +1,7 @@
-# -----------------------------------
+# ----------------------------------------------
 # Jormungandr Test Network Node Image
 # https://github.com/input-output-hk/jormungandr
-# -----------------------------------
+# ----------------------------------------------
 
 # build static binaries from source + output to /tmp/bin
 # rust-musl-builder allows for static binaries that have no dependencies
