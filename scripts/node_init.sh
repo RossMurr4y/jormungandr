@@ -178,13 +178,11 @@ EOF
 
 function start_jormungandr(){
 
-  args=(
-    "genesis-block-hash ${GENESIS_HASH}",
-    'config /home/cardano/jormungandr/configuration/node_config.yaml'
-  )
-
+  args[0]="genesis-block-hash ${GENESIS_HASH}"
+  args[1]'config /home/cardano/jormungandr/configuration/node_config.yaml'
+  
   if [[ ${NODE_SECRET} ]]; then
-    args += 'secret /home/cardano/jormungandr/configuration/node_secret.yaml'
+    args[2]='secret /home/cardano/jormungandr/configuration/node_secret.yaml'
   fi
 
   jormungandr ${args[@]/#/--}
