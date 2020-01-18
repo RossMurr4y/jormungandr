@@ -40,14 +40,14 @@ Usage: $(basename $0)
 
 where
 
-(o) -g                  is the [g]enesis block hash of the blockchain.
-(o) -h                  Shows this text.
-(o) -l                  is the [l]isten_address property of the config yaml.
-(o) -n                  NO_PEERS=true - provide [n]o trusted peers to the yaml.
-(o) -p                  is the [p]ublic_address property of the config yaml.
-(o) -s                  is the [s]torage property of the config yaml.
-(o) -t                  is the path to the [t]rusted peers file.
-(o) -x                  NODE_SECRET=true
+(o) -g        is the [g]enesis block hash of the blockchain.
+(o) -h        Shows this text.
+(o) -l        is the [l]isten_address property of the config yaml.
+(o) -n        NO_PEERS=true - provide [n]o trusted peers to the yaml.
+(o) -p        is the [p]ublic_address property of the config yaml.
+(o) -s        is the [s]torage property of the config yaml.
+(o) -t        is the path to the [t]rusted peers file.
+(o) -x        NODE_SECRET=true
 
 (m) mandatory, (o) optional, (d) deprecated
 
@@ -170,7 +170,7 @@ EOF
   echo "}" >> "${node_config}"
 
   # cat out the file to stdout for logging
-  echo "Node Configuration File:\n$(cat ${node_config})"
+  >&2 echo "Node Configuration File:\n$(cat ${node_config})"
 
 }
 
