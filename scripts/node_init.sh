@@ -1,6 +1,8 @@
 #!/bin/sh
 
 # Author: Ross Murray (github.com/rossmurr4y)
+# Git Repo: rossmurr4y/jormungandr
+# Docker Hub: rossmurr4y/jormungandr
 
 # Initialize the jormungandr container
 
