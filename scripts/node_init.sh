@@ -172,7 +172,8 @@ EOF
   echo "}" >> "${node_config}"
 
   # cat out the file to stdout for logging
-  >&2 echo "Node Configuration File:\n$(cat ${node_config})"
+  config=$(cat "${node_config}")
+  >&2 echo "Node Configuration File:\n ${config}"
 
 }
 
