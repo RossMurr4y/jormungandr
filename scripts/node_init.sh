@@ -88,12 +88,12 @@ EOF
 
 function options(){
 
-  while getopts "g:h:l:n:p:s:t:x" option; do
+  while getopts "g:hl:np:s:t:x" option; do
     case "${option}" in
       g) GENESIS_HASH="${OPTARG}" ;;
       h) usage; return 1 ;;
       l) LISTEN_ADDRESS="${OPTARG}" ;;
-      n) NO_PEERS="${OPTARG}" ;;
+      n) NO_PEERS=true ;;
       p) PUBLIC_ADDRESS="${OPTARG}" ;;
       s) STORAGE_PATH="${OPTARG}" ;;
       t) TRUSTED_PEERS_FILE="${OPTARG}" ;;
