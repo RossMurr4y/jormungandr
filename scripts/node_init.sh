@@ -24,6 +24,7 @@ P2P_BLOCK_INTEREST_DEFAULT="high"
 P2P_MESSAGE_INTEREST_DEFAULT="high"
 STORAGE_PATH_DEFAULT=""
 NODE_SECRET_DEFAULT=false
+MAX_CONNECTIONS_DEFAULT=500
 
 function usage(){
   cat <<EOF
@@ -71,6 +72,7 @@ P2P_BLOCK_INTEREST    = "${P2P_BLOCK_INTEREST_DEFAULT}"
 P2P_MESSAGE_INTEREST  = "${P2P_MESSAGE_INTEREST_DEFAULT}"
 STORAGE_PATH          = "${STORAGE_PATH_DEFAULT}"
 NODE_SECRET           = "${NODE_SECRET_DEFAULT}"
+MAX_CONNECTIONS       = "${MAX_CONNECTIONS_DEFAULT}"
 
 NOTES:
   1.  If a setting is not covered by the script options, then it must be set
@@ -118,6 +120,7 @@ function options(){
   P2P_BLOCK_INTEREST="${P2P_BLOCK_INTEREST:-${P2P_BLOCK_INTEREST_DEFAULT}}"
   P2P_MESSAGE_INTEREST="${P2P_MESSAGE_INTEREST:-${P2P_MESSAGE_INTEREST_DEFAULT}}"
   NODE_SECRET="${NODE_SECRET:-${NODE_SECRET_DEFAULT}}"
+  MAX_CONNECTIONS="${MAX_CONNECTIONS:-${MAX_CONNECTIONS_DEFAULT}}"
 
   return 0
 }
@@ -152,7 +155,8 @@ EOF
   cat << EOF >> "${node_config}"
     ],
     "public_address": "${PUBLIC_ADDRESS}",
-    "listen_address": "${LISTEN_ADDRESS}"
+    "listen_address": "${LISTEN_ADDRESS}",
+    "max_connections": "${MAX_CONNECTIONS}"
   }
 EOF
 
