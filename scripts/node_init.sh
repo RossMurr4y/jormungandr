@@ -9,7 +9,7 @@
 # -- Variables -- #
 config_dir="/home/cardano/jormungandr/configuration"
 node_config="${config_dir}/node_config.yaml"
-trusted_peers_file="${config_dir}/trusted_peers.json"
+trusted_peers_file="/usr/local/bin/trusted_peers.json"
 
 # -- Option Defaults -- #
 LISTEN_ADDRESS_DEFAULT="/ip4/0.0.0.0/tcp/3000"
@@ -149,8 +149,8 @@ function generate_node_config(){
 EOF
 
   # Include trusted peers if applicable
-  if [[ ! ${NO_PEERS} ]]; then
-    cat "${TRUSTED_PEERS_FILE}" >> "${node_config}"
+  if ! ${NO_PEERS} ; then
+    cat ${TRUSTED_PEERS_FILE} >> "${node_config}"
   fi
 
   # Add in public and listen addresses
@@ -163,7 +163,7 @@ EOF
 EOF
 
   # Add storage if its been specified 
-  if [[ -n "${STORAGE_PATH}" ]]; then
+  if ! "${STORAGE_PATH}" = "" ; then
     sed '$s/$/,/'
     echo "\"storage\": \"$(cat ${STORAGE_PATH})\"" >> "${node_config}"
   fi
@@ -180,7 +180,7 @@ function start_jormungandr(){
 
   args="--genesis-block-hash ${GENESIS_HASH} --config /home/cardano/jormungandr/configuration/node_config.yaml"
   
-  if [[ ${NODE_SECRET} ]]; then
+  if ${NODE_SECRET}; then
     args="${args} --secret /home/cardano/jormungandr/configuration/node_secret.yaml"
   fi
 
