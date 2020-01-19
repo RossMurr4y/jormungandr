@@ -158,7 +158,7 @@ EOF
     ],
     "public_address": "${PUBLIC_ADDRESS}",
     "listen_address": "${LISTEN_ADDRESS}",
-    "max_connections": "${MAX_CONNECTIONS}"
+    "max_connections": ${MAX_CONNECTIONS}
   }
 EOF
 
@@ -178,14 +178,13 @@ EOF
 
 function start_jormungandr(){
 
-  args[0]="genesis-block-hash ${GENESIS_HASH}"
-  args[1]'config /home/cardano/jormungandr/configuration/node_config.yaml'
+  args="--genesis-block-hash ${GENESIS_HASH} --config /home/cardano/jormungandr/configuration/node_config.yaml"
   
   if [[ ${NODE_SECRET} ]]; then
-    args[2]='secret /home/cardano/jormungandr/configuration/node_secret.yaml'
+    args="${args} --secret /home/cardano/jormungandr/configuration/node_secret.yaml"
   fi
 
-  jormungandr ${args[@]/#/--}
+  jormungandr ${args}
 }
 
 function main(){
