@@ -145,17 +145,19 @@ function generate_node_config(){
       "blocks": "${P2P_BLOCK_INTEREST}",
       "messages": "${P2P_MESSAGE_INTEREST}"
     },
-    "trusted_peers": [
+    "trusted_peers": 
 EOF
 
   # Include trusted peers if applicable
   if ! ${NO_PEERS} ; then
     cat ${TRUSTED_PEERS_FILE} >> "${node_config}"
+  else
+    cat "[]" >> "${node_config}"
   fi
 
   # Add in public and listen addresses
   cat << EOF >> "${node_config}"
-    ],
+    ,
     "public_address": "${PUBLIC_ADDRESS}",
     "listen_address": "${LISTEN_ADDRESS}",
     "max_connections": ${MAX_CONNECTIONS}
