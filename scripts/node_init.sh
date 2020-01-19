@@ -163,7 +163,7 @@ EOF
 EOF
 
   # Add storage if its been specified 
-  if ! "${STORAGE_PATH}" = "" ; then
+  if [ -n "${STORAGE_PATH}" ]; then
     sed '$s/$/,/'
     echo "\"storage\": \"$(cat ${STORAGE_PATH})\"" >> "${node_config}"
   fi
