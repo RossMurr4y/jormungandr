@@ -171,7 +171,7 @@ EOF
   fi
 
   # Complete the json object
-  echo "}}" >> "${node_config}"
+  echo "}" >> "${node_config}"
 }
 
 function start_jormungandr(){
