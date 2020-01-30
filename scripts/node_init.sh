@@ -166,16 +166,12 @@ EOF
 
   # Add storage if its been specified 
   if [ -n "${STORAGE_PATH}" ]; then
-    sed '$s/$/,/'
+    echo "," >> "${node_config}"
     echo "\"storage\": \"$(cat ${STORAGE_PATH})\"" >> "${node_config}"
   fi
 
   # Complete the json object
-  echo "}" >> "${node_config}"
-
-  # cat out the file to stdout for debuging/logging
-  config=`cat "${config}"`
-  >&2 echo "Node Configuration File:\n ${config}"
+  echo "}}" >> "${node_config}"
 }
 
 function start_jormungandr(){
